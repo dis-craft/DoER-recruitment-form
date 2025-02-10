@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Form &amp; Questions</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f4f4f4;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 300px;
+      margin-bottom: 20px;
+    }
+    input, select {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+    .next-button {
+      background: blue;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 10px;
+      width: 300px;
+      margin-top: 20px;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+    .next-button:hover {
+      background: darkblue;
+    }
+    .question-item {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+    .question-item label {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Student Form Section -->
+  <div id="studentFormContainer" class="container">
+    <h2>Student Form</h2>
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="text" id="rollNumber" placeholder="Roll Number" required />
+    <select id="roll">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+      <option value="admin">Admin</option>
+    </select>
+    <button id="nextButton" class="next-button">Next</button>
+  </div>
+
+  <!-- Questions Form Section (hidden initially) -->
+  <div id="questionsContainer" class="container" style="display: none;">
+    <h2>Answer the Questions</h2>
+    <form id="questionForm">
+      <div id="questions"></div>
+      <button type="submit" class="next-button">Submit</button>
+    </form>
+  </div>
+
+  <!-- Firebase & Application Script -->
+  <script type="module">
+    /***** Import Firebase modules *****/
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-analytics.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-database.js";
+    
+    /***** Your Firebase Configuration *****/
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6pI97qLWk_f1MiEFsCFkA8c2xqMHfSaw",
+      authDomain: "doer-recruitment.firebaseapp.com",
+      projectId: "doer-recruitment",
+      storageBucket: "doer-recruitment.firebasestorage.app",
+      messagingSenderId: "800257233136",
+      appId: "1:800257233136:web:9e57cc82599028eefc7235",
+      measurementId: "G-6PT7W3BBG8"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const database = getDatabase(app);
+
+    /***** Global variable to hold student info *****/
+    let studentData = {};
+
+    /***** Handle “Next” Button to Show Questions Form *****/
+    const nextButton = document.getElementById("nextButton");
+    nextButton.addEventListener("click", () => {
+      const name = document.getElementById("name").value.trim();
+      const rollNumber = document.getElementById("rollNumber").value.trim();
+      const roll = document.getElementById("roll").value;
+
+      if (!name || !rollNumber) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      // Save student info
+      studentData = { name, rollNumber, roll };
+
+      // Hide student form and display questions form
+      document.getElementById("studentFormContainer").style.display = "none";
+      document.getElementById("questionsContainer").style.display = "block";
+
+      // Populate the questions form dynamically
+      populateQuestions();
+    });
+
+    /***** List of Questions *****/
+    const questionsList = [
+      "What is your favorite subject?",
+      "What is your dream job?",
+      "What motivates you to study?",
+      "What is your favorite book?",
+      "Who is your role model?",
+      "What is your biggest achievement?",
+      "What are your hobbies?",
+      "What skill do you want to learn?",
+      "What is your biggest challenge in studies?",
+      "Where do you see yourself in 5 years?"
+    ];
+
+    /***** Function to Populate Questions *****/
+    function populateQuestions() {
+      const questionsContainer = document.getElementById("questions");
+      questionsContainer.innerHTML = ""; // Clear any existing content
+
+      questionsList.forEach((question, index) => {
+        const div = document.createElement("div");
+        div.classList.add("question-item");
+        div.innerHTML = `
+          <label for="answer${index}">${question}</label>
+          <input type="text" id="answer${index}" name="answer${index}" required />
+        `;
+        questionsContainer.appendChild(div);
+      });
+    }
+
+    /***** Handle Questions Form Submission *****/
+    const questionForm = document.getElementById("questionForm");
+    questionForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      // Collect answers from the form
+      const formData = new FormData(questionForm);
+      let answers = {};
+      formData.forEach((value, key) => {
+        answers[key] = value.trim();
+      });
+
+      // Merge student information with answers and add a timestamp
+      const submissionData = {
+        ...studentData,
+        answers: answers,
+        timestamp: new Date().toISOString()
+      };
+
+      // Write the submission to Firebase Realtime Database
+      // 'push' creates a new unique child under the "submissions" node.
+      const submissionsRef = ref(database, "submissions");
+      const newSubmissionRef = push(submissionsRef);
+      set(newSubmissionRef, submissionData)
+        .then(() => {
+          alert("Answers submitted successfully!");
+          // Option: Reset the form or redirect as needed.
+          window.location.reload(); // For now, reload to start over.
+        })
+        .catch((error) => {
+          console.error("Error saving data:", error);
+          alert("There was an error submitting your answers. Please try again.");
+        });
+    });
+  </script>
+</body>
+</html>
