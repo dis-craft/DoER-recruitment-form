@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DoER Recruitment Form</title>
   <style>
-    /* Reset and base styles */
+    /* Reset defaults */
     * {
       box-sizing: border-box;
     }
@@ -17,10 +17,24 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* Allow the page to scroll if content exceeds viewport height */
       min-height: 100vh;
     }
-    /* Container styles for both forms */
+    /* Logo styling: fixed in the top corners of the viewport */
+    .logo {
+      position: fixed;
+      top: 10px;
+      width: 80px;
+      height: 80px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+    .logo-left {
+      left: 20px;
+    }
+    .logo-right {
+      right: 20px;
+    }
+    /* Container styling for the forms */
     .container {
       background: #fff;
       padding: 20px;
@@ -29,11 +43,10 @@
       text-align: center;
       width: 350px;
       max-width: 90%;
+      margin-top: 80px; /* Provides space below the fixed logos */
       margin-bottom: 20px;
     }
-    .container h2 {
-      margin-top: 0;
-    }
+    /* Form inputs and buttons */
     input, select {
       width: 100%;
       margin: 10px 0;
@@ -55,7 +68,7 @@
     .next-button:hover {
       background: #09635b;
     }
-    /* Styles for each question item */
+    /* Styling for each question item */
     .question-item {
       margin-bottom: 15px;
       text-align: left;
@@ -68,6 +81,10 @@
   </style>
 </head>
 <body>
+  <!-- Fixed Logos in the Corners -->
+  <img src="gitamlogo.png" alt="Left Logo" class="logo logo-left" onclick="window.location.reload();" />
+  <img src="doerlogo (2).png" alt="Right Logo" class="logo logo-right" onclick="window.location.reload();" />
+
   <!-- Student Form Section -->
   <div id="studentFormContainer" class="container">
     <h2>DoER Recruitment Form</h2>
@@ -199,7 +216,7 @@
       set(newSubmissionRef, submissionData)
         .then(() => {
           alert("Answers submitted successfully!");
-          window.location.reload(); // Optionally redirect or reset the forms
+          window.location.reload();
         })
         .catch((error) => {
           console.error("Error saving data:", error);
