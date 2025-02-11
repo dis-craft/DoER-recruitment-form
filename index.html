@@ -11,14 +11,14 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background-color: #f4f4f4;
+      background-color: #0E8D83;
       margin: 0;
       font-family: Arial, sans-serif;
     }
     .container {
-      background: white;
+      background: rgb(255, 255, 255);
       padding: 20px;
-      border-radius: 10px;
+      border-radius: 14px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
       text-align: center;
       width: 300px;
@@ -28,12 +28,12 @@
       width: 100%;
       margin: 10px 0;
       padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border: 2px solid #0E8D83;
+      border-radius: 7px;
       box-sizing: border-box;
     }
     .next-button {
-      background: blue;
+      background: #0E8D83;
       color: white;
       border: none;
       cursor: pointer;
@@ -44,7 +44,7 @@
       font-size: 16px;
     }
     .next-button:hover {
-      background: darkblue;
+      background: #09635b;
     }
     .question-item {
       margin-bottom: 15px;
@@ -59,25 +59,40 @@
 <body>
   <!-- Student Form Section -->
   <div id="studentFormContainer" class="container">
-    <h2>Student Form</h2>
+    <h2>DoER Recruitment Form</h2>
     <input type="text" id="name" placeholder="Name" required />
     <input type="text" id="rollNumber" placeholder="Roll Number" required />
+    <input type="text" id="course" placeholder="Course" required/>
+    <input type="text" id="batch" placeholder="Batch" required/>
     <select id="roll">
-      <option value="student">Student</option>
-      <option value="teacher">Teacher</option>
-      <option value="admin">Admin</option>
-    </select>
+      <option value="1styear">1st YEAR</option>
+      <option value="2ndyear">2ns YEAR</option>
+      <option value="3rdyear">3rd YEAR</option>
+      <option value="4th year">4th YEAR</option>
+    </select> 
     <button id="nextButton" class="next-button">Next</button>
-  </div>
+  </div> 
 
   <!-- Questions Form Section (hidden initially) -->
-  <div id="questionsContainer" class="container" style="display: none;">
+    <div id="questionsContainer" class="container" style="display: none;">
     <h2>Answer the Questions</h2>
     <form id="questionForm">
       <div id="questions"></div>
       <button type="submit" class="next-button">Submit</button>
     </form>
   </div>
+  <style>
+     .container2{
+      background: rgb(255, 255, 255);
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 300px;
+      margin-bottom: 20px;
+    }
+  </style>
+
 
   <!-- Firebase & Application Script -->
   <script type="module">
