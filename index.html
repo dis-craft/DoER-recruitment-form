@@ -19,7 +19,7 @@
       align-items: center;
       min-height: 100vh;
     }
-    /* Logo styling: fixed in the top corners of the viewport */
+    /* Logo styling: fixed in the top corners */
     .logo {
       position: absolute;
       top: 10px;
@@ -43,7 +43,7 @@
       text-align: center;
       width: 350px;
       max-width: 90%;
-      margin-top: 80px; /* Provides space below the fixed logos */
+      margin-top: 80px;
       margin-bottom: 20px;
     }
     /* Form inputs and buttons */
@@ -81,7 +81,7 @@
   </style>
 </head>
 <body>
-  <!-- Fixed Logos in the Corners -->
+  <!-- Fixed Logos -->
   <img src="gitamlogo.png" alt="Left Logo" class="logo logo-left" onclick="window.location.reload();" />
   <img src="doerlogo (2).png" alt="Right Logo" class="logo logo-right" onclick="window.location.reload();" />
 
@@ -91,6 +91,7 @@
     <input type="text" id="name" placeholder="Name" required />
     <input type="text" id="rollNumber" placeholder="Roll Number" required />
     <input type="text" id="course" placeholder="Course" required />
+    <input type="text" id="batch" placeholder="Batch" required />
     <select id="roll">
       <option value="1styear">1st YEAR</option>
       <option value="2ndyear">2nd YEAR</option>
@@ -109,35 +110,12 @@
     </form>
   </div>
 
-  <!-- Firebase & Application Script -->
-  <script type="module">
-    // Import Firebase modules
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-analytics.js";
-    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-database.js";
-    
-    // Your Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyB6pI97qLWk_f1MiEFsCFkA8c2xqMHfSaw",
-      authDomain: "doer-recruitment.firebaseapp.com",
-      projectId: "doer-recruitment",
-      storageBucket: "doer-recruitment.firebasestorage.app",
-      messagingSenderId: "800257233136",
-      appId: "1:800257233136:web:9e57cc82599028eefc7235",
-      measurementId: "G-6PT7W3BBG8"
-    };
-
-    // Initialize Firebase
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const database = getDatabase(app);
-
+  <script>
     // Global variable to hold student info
     let studentData = {};
 
-    // Handle "Next" Button to Show Questions Form
-    const nextButton = document.getElementById("nextButton");
-    nextButton.addEventListener("click", () => {
+    // Handle "Next" Button: Show the Questions form
+    document.getElementById("nextButton").addEventListener("click", () => {
       const name = document.getElementById("name").value.trim();
       const rollNumber = document.getElementById("rollNumber").value.trim();
       const course = document.getElementById("course").value.trim();
@@ -149,14 +127,11 @@
         return;
       }
 
-      // Save student info
       studentData = { name, rollNumber, course, batch, roll };
 
-      // Hide student form and display questions form
       document.getElementById("studentFormContainer").style.display = "none";
       document.getElementById("questionsContainer").style.display = "block";
 
-      // Populate the questions form dynamically
       populateQuestions();
     });
 
@@ -174,11 +149,10 @@
       "Where do you see yourself in 5 years?"
     ];
 
-    // Function to Populate Questions
+    // Function to populate questions dynamically
     function populateQuestions() {
       const questionsContainer = document.getElementById("questions");
-      questionsContainer.innerHTML = ""; // Clear any existing content
-
+      questionsContainer.innerHTML = "";
       questionsList.forEach((question, index) => {
         const div = document.createElement("div");
         div.classList.add("question-item");
@@ -190,38 +164,42 @@
       });
     }
 
-    // Handle Questions Form Submission
-    const questionForm = document.getElementById("questionForm");
-    questionForm.addEventListener("submit", (event) => {
+    // Handle Questions Form Submission: send data to Google Apps Script
+    document.getElementById("questionForm").addEventListener("submit", (event) => {
       event.preventDefault();
 
-      // Collect answers from the form
-      const formData = new FormData(questionForm);
+      const formData = new FormData(document.getElementById("questionForm"));
       let answers = {};
       formData.forEach((value, key) => {
         answers[key] = value.trim();
       });
 
-      // Merge student information with answers and add a timestamp
       const submissionData = {
         ...studentData,
         answers: answers,
         timestamp: new Date().toISOString()
       };
 
-      // Write the submission to Firebase Realtime Database
-      const submissionsRef = ref(database, "submissions");
-      const newSubmissionRef = push(submissionsRef);
-      set(newSubmissionRef, submissionData)
-        .then(() => {
-          alert("Answers submitted successfully!");
-          window.location.reload();
-        })
-        .catch((error) => {
-          console.error("Error saving data:", error);
-          alert("There was an error submitting your answers. Please try again.");
-        });
+      // Google Apps Script Web App URL (replace with your actual URL)
+      const scriptURL = "https://script.google.com/macros/s/AKfycbz2U8A2fjiTimjwt_KlVSDTiCT05rHA7S0L8ivxWq2OgM9pJRP1w7VMbHp6ommE07-TFg/exec";
+
+      fetch(scriptURL, {
+        method: 'POST',
+        // Using 'no-cors' mode allows the request to be sent even if the response isn’t readable.
+        mode: 'no-cors',
+        body: JSON.stringify(submissionData)
+      })
+      .then(() => {
+        alert("Submission successful! Your data has been written to the Google Sheet.");
+        window.location.reload();
+      })
+      .catch(error => {
+        console.error("Error submitting data:", error);
+        alert("There was an error submitting your data. Please try again.");
+      });
     });
   </script>
 </body>
 </html>
+<!-- //AKfycbz2U8A2fjiTimjwt_KlVSDTiCT05rHA7S0L8ivxWq2OgM9pJRP1w7VMbHp6ommE07-TFg -->
+<!-- https://script.google.com/macros/s/AKfycbz2U8A2fjiTimjwt_KlVSDTiCT05rHA7S0L8ivxWq2OgM9pJRP1w7VMbHp6ommE07-TFg/exec -->
