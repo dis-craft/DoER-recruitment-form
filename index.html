@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DoER Recruitment Form</title>
   <style>
-    /* Reset defaults */
     * {
       box-sizing: border-box;
     }
@@ -19,7 +18,6 @@
       align-items: center;
       min-height: 100vh;
     }
-    /* Logo styling: fixed in the top corners */
     .logo {
       position: absolute;
       top: 10px;
@@ -34,7 +32,6 @@
     .logo-right {
       right: 20px;
     }
-    /* Container styling for the forms */
     .container {
       background: #fff;
       padding: 20px;
@@ -44,9 +41,7 @@
       width: 350px;
       max-width: 90%;
       margin-top: 80px;
-      margin-bottom: 20px;
     }
-    /* Form inputs and buttons */
     input, select {
       width: 100%;
       margin: 10px 0;
@@ -68,7 +63,6 @@
     .next-button:hover {
       background: #09635b;
     }
-    /* Styling for each question item */
     .question-item {
       margin-bottom: 15px;
       text-align: left;
@@ -81,17 +75,14 @@
   </style>
 </head>
 <body>
-  <!-- Fixed Logos -->
   <img src="gitamlogo.png" alt="Left Logo" class="logo logo-left" onclick="window.location.reload();" />
   <img src="doerlogo (2).png" alt="Right Logo" class="logo logo-right" onclick="window.location.reload();" />
 
-  <!-- Student Form Section -->
   <div id="studentFormContainer" class="container">
     <h2>DoER Recruitment Form</h2>
     <input type="text" id="name" placeholder="Name" required />
     <input type="text" id="rollNumber" placeholder="Roll Number" required />
     <input type="text" id="course" placeholder="Course" required />
-    <input type="text" id="batch" placeholder="Batch" required />
     <select id="roll">
       <option value="1styear">1st YEAR</option>
       <option value="2ndyear">2nd YEAR</option>
@@ -101,7 +92,6 @@
     <button id="nextButton" class="next-button">Next</button>
   </div>
 
-  <!-- Questions Form Section (hidden initially) -->
   <div id="questionsContainer" class="container" style="display: none;">
     <h2>Answer the Questions</h2>
     <form id="questionForm">
@@ -111,23 +101,20 @@
   </div>
 
   <script>
-    // Global variable to hold student info
     let studentData = {};
 
-    // Handle "Next" Button: Show the Questions form
     document.getElementById("nextButton").addEventListener("click", () => {
       const name = document.getElementById("name").value.trim();
       const rollNumber = document.getElementById("rollNumber").value.trim();
       const course = document.getElementById("course").value.trim();
-      const batch = document.getElementById("batch").value.trim();
       const roll = document.getElementById("roll").value;
 
-      if (!name || !rollNumber || !course || !batch) {
+      if (!name || !rollNumber || !course) {
         alert("Please fill all fields.");
         return;
       }
 
-      studentData = { name, rollNumber, course, batch, roll };
+      studentData = { name, rollNumber, course, roll };
 
       document.getElementById("studentFormContainer").style.display = "none";
       document.getElementById("questionsContainer").style.display = "block";
@@ -135,7 +122,6 @@
       populateQuestions();
     });
 
-    // List of Questions
     const questionsList = [
       "What is your favorite subject?",
       "What is your dream job?",
@@ -149,7 +135,6 @@
       "Where do you see yourself in 5 years?"
     ];
 
-    // Function to populate questions dynamically
     function populateQuestions() {
       const questionsContainer = document.getElementById("questions");
       questionsContainer.innerHTML = "";
@@ -164,7 +149,6 @@
       });
     }
 
-    // Handle Questions Form Submission: send data to Google Apps Script
     document.getElementById("questionForm").addEventListener("submit", (event) => {
       event.preventDefault();
 
@@ -180,12 +164,10 @@
         timestamp: new Date().toISOString()
       };
 
-      // Google Apps Script Web App URL (replace with your actual URL)
-      const scriptURL = "https://script.google.com/macros/s/AKfycbwyagXKRNI6TZr3xjsNU-1bQ4EAtBIRssrLOiH96GBO0BujSqWtLJgK3iRcrfPCqM7WLQ/exec";
+      const scriptURL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
 
       fetch(scriptURL, {
         method: 'POST',
-        // Using 'no-cors' mode allows the request to be sent even if the response isn’t readable.
         mode: 'no-cors',
         body: JSON.stringify(submissionData)
       })
