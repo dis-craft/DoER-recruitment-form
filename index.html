@@ -211,7 +211,7 @@
 
       fetch(scriptURL, {
         method: 'POST',
-        mode: 'no-cors', // using no-cors to send the request even if we don't need the response
+        mode: 'no-cors', // using no-cors mode to send the request
         body: JSON.stringify(submissionData)
       })
       .then(() => {
