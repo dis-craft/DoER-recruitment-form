@@ -77,14 +77,15 @@
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
+      white-space: pre-wrap; /* Preserves any line breaks if using \n */
     }
-    /* Styling for dropdown on second page */
-    .form-dropdown {
+    /* Styling for additional form sections on second page */
+    .form-section {
       margin-top: 20px;
       margin-bottom: 20px;
       text-align: left;
     }
-    .form-dropdown label {
+    .form-section label {
       display: block;
       margin-bottom: 5px;
       font-weight: bold;
@@ -117,8 +118,8 @@
     <form id="questionForm">
       <div id="questions"></div>
       
-      <!-- New Dropdown added above the submit button -->
-      <div class="form-dropdown">
+      <!-- Dropdown for Preferred Option -->
+      <div class="form-section">
         <label for="preferredOption">Select Your Preferred Option:</label>
         <select id="preferredOption" name="preferredOption" required>
           <option value="">--Select an Option--</option>
@@ -128,11 +129,46 @@
         </select>
       </div>
       
+      <!-- File upload for Resume -->
+      <div class="form-section">
+        <label for="resume">Upload Your Resume (PDF or DOC):</label>
+        <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required />
+      </div>
+      
+      <!-- File upload for Certificates -->
+      <div class="form-section">
+        <label for="certificate">Upload Your Certificates (PDF or DOC):</label>
+        <input type="file" id="certificate" name="certificate" accept=".pdf,.doc,.docx" required />
+      </div>
+      
       <button type="submit" class="next-button">Submit</button>
     </form>
   </div>
 
-  <script>
+  <script type="module">
+    // Import Firebase modules
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-analytics.js";
+    import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.3.0/firebase-storage.js";
+    
+    // Your Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6pI97qLWk_f1MiEFsCFkA8c2xqMHfSaw",
+      authDomain: "doer-recruitment.firebaseapp.com",
+      projectId: "doer-recruitment",
+      storageBucket: "doer-recruitment.firebasestorage.app",
+      messagingSenderId: "800257233136",
+      appId: "1:800257233136:web:9e57cc82599028eefc7235",
+      measurementId: "G-6PT7W3BBG8"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const database = getDatabase(app);
+    const storage = getStorage(app);
+
     // Global variable to hold student info
     let studentData = {};
 
@@ -159,18 +195,16 @@
       populateQuestions();
     });
 
-    // List of Questions
+    // List of Questions (You can include line breaks with <br> or \n and CSS white-space: pre-wrap)
     const questionsList = [
-      "What is your favorite subject?",
-      "What is your dream job?",
-      "What motivates you to study?",
-      "What is your favorite book?",
-      "Who is your role model?",
-      "What is your biggest achievement?",
-      "What are your hobbies?",
-      "What skill do you want to learn?",
-      "What is your biggest challenge in studies?",
-      "Where do you see yourself in 5 years?"
+      "Tell us about yourself",
+      "What are your strengths & weaknesses?",
+      "What excites you the most about this role?",
+      "Details of past experience/achievements (even in school or 12th grade)",
+      "Why should we recruit you for this position?",
+      "Do you have any prior knowledge of the commitment, requirements, and nature of the role of a Student Life Associate (SLA)?\nPlease share your observations.",
+      "Share details of an example where you helped organize an outreach activity (e.g. panel discussion, guest lecture, etc.)",
+      "Suggest an outreach activity that can help your department"
     ];
 
     // Function to populate questions dynamically
@@ -181,50 +215,75 @@
         const div = document.createElement("div");
         div.classList.add("question-item");
         div.innerHTML = `
-          <label for="answer${index}">${question}</label>
+          <label for="answer${index}" style="white-space: pre-wrap;">${question}</label>
           <input type="text" id="answer${index}" name="answer${index}" required />
         `;
         questionsContainer.appendChild(div);
       });
     }
 
-    // Handle Questions Form Submission: send data to Google Apps Script
-    document.getElementById("questionForm").addEventListener("submit", (event) => {
+    // Handle Questions Form Submission:
+    // 1. Upload files (resume & certificate) to Firebase Storage.
+    // 2. Once uploaded, get their download URLs.
+    // 3. Merge all data (student info, answers, file URLs, timestamp) and send to your Apps Script Web App.
+    document.getElementById("questionForm").addEventListener("submit", async (event) => {
       event.preventDefault();
 
-      // Collect all form data from the questions form, including the dropdown
+      // Collect form data from the questions form (including dropdown)
       const formData = new FormData(document.getElementById("questionForm"));
       let answers = {};
       formData.forEach((value, key) => {
         answers[key] = value.trim();
       });
 
-      // Merge student information with answers and add a timestamp
+      // Prepare the submission data with student info and timestamp.
       const submissionData = {
         ...studentData,
         answers: answers,
         timestamp: new Date().toISOString()
       };
 
-      // Google Apps Script Web App URL (replace with your actual URL)
-      const scriptURL = "https://script.google.com/macros/s/AKfycbxzFdRvvnID2i9fiEt61blogKN508Mp3o7DAg_UjCfzTJZTgSVojSgrcTQ0XsedK2W3zg/exec";
+      // Get file input elements
+      const resumeInput = document.getElementById("resume");
+      const certificateInput = document.getElementById("certificate");
 
-      fetch(scriptURL, {
-        method: 'POST',
-        mode: 'no-cors', // using no-cors mode to send the request
-        body: JSON.stringify(submissionData)
-      })
-      .then(() => {
+      try {
+        // Create upload promises for resume and certificate.
+        const resumePromise = (resumeInput.files.length > 0) ?
+          uploadBytes(storageRef(storage, `resumes/${Date.now()}_${resumeInput.files[0].name}`), resumeInput.files[0])
+            .then(snapshot => getDownloadURL(snapshot.ref)) :
+          Promise.resolve("");
+
+        const certificatePromise = (certificateInput.files.length > 0) ?
+          uploadBytes(storageRef(storage, `certificates/${Date.now()}_${certificateInput.files[0].name}`), certificateInput.files[0])
+            .then(snapshot => getDownloadURL(snapshot.ref)) :
+          Promise.resolve("");
+
+        // Wait for both file uploads to complete.
+        const [resumeURL, certificateURL] = await Promise.all([resumePromise, certificatePromise]);
+        submissionData.answers.resumeURL = resumeURL;
+        submissionData.answers.certificateURL = certificateURL;
+
+        // Google Apps Script Web App URL (replace with your actual URL)
+        const scriptURL = "https://script.google.com/macros/s/AKfycbwEqHd83ynXa2AJGk0DuUpeNxPeFtalwjwG1uUjNJQurZWr5nW_KMaoa1hXPPkB1IyBkQ/exec";
+
+        // Send the submissionData as a POST request to your Apps Script
+        await fetch(scriptURL, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(submissionData)
+        });
+
         alert("Submission successful! Your data has been written to the Google Sheet.");
         window.location.reload();
-      })
-      .catch(error => {
+      } catch (error) {
         console.error("Error submitting data:", error);
         alert("There was an error submitting your data. Please try again.");
-      });
+      }
     });
   </script>
 </body>
 </html>
-<!-- AKfycbxzFdRvvnID2i9fiEt61blogKN508Mp3o7DAg_UjCfzTJZTgSVojSgrcTQ0XsedK2W3zg -->
-<!-- https://script.google.com/macros/s/AKfycbxzFdRvvnID2i9fiEt61blogKN508Mp3o7DAg_UjCfzTJZTgSVojSgrcTQ0XsedK2W3zg/exec -->
+
+<!-- AKfycbwEqHd83ynXa2AJGk0DuUpeNxPeFtalwjwG1uUjNJQurZWr5nW_KMaoa1hXPPkB1IyBkQ -->
+<!-- https://script.google.com/macros/s/AKfycbwEqHd83ynXa2AJGk0DuUpeNxPeFtalwjwG1uUjNJQurZWr5nW_KMaoa1hXPPkB1IyBkQ/exec -->
